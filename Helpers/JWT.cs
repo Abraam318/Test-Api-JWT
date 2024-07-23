@@ -11,7 +11,7 @@ namespace Test_Api_JWT.Helpers
         public string key { get; set; }
         public string Issuer { get; set; }
         public string Audience { get; set; }
-        public string Duration { get; set; }
+        public double Duration { get; set; }
         
     }
 }
