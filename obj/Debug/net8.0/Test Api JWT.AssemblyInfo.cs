@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Test Api JWT")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3d81c4399c7dbd87073372aaaf1abf483e866447")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fa38b62a4d2363373288d3eceba9d0c7a8701f92")]
 [assembly: System.Reflection.AssemblyProductAttribute("Test Api JWT")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Test Api JWT")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

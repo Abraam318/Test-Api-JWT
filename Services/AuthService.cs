@@ -25,6 +25,27 @@ namespace Test_Api_JWT.Services
             _jwt = jwt.Value;
         }
 
+        public async Task<AuthModel> GetTokenAsync(TokenRequestModel model)
+        {
+            var AuthModel = new AuthModel();
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if(user is null || !await _userManager.CheckPasswordAsync(user,model.Password)){
+                AuthModel.Message = "Incorrect Email or Password";
+                return AuthModel;
+            }
+            var jwtSecurityToken = await CreateJwtToken(user);
+            var roleList = await _userManager.GetRolesAsync(user) ;
+
+            AuthModel.IsAuthenticated = true;
+            AuthModel.Email = user.Email;
+            AuthModel.ExpiresOn = jwtSecurityToken.ValidTo;
+            AuthModel.Roles = roleList.ToList();
+            AuthModel.Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
+            AuthModel.Username = user.UserName;
+
+            return AuthModel;
+        }
+
         public async Task<AuthModel> RegisterAsync(RegisterModel model)
         {
             if (model.Email == null || model.Username == null || model.Password == null)
