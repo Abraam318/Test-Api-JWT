@@ -259,3 +259,4 @@ D:\Test Api JWT\obj\Debug\net8.0\refint\Test Api JWT.dll
 D:\Test Api JWT\obj\Debug\net8.0\Test Api JWT.pdb
 D:\Test Api JWT\obj\Debug\net8.0\Test Api JWT.genruntimeconfig.cache
 D:\Test Api JWT\obj\Debug\net8.0\ref\Test Api JWT.dll
+D:\Test Api JWT\obj\Debug\net8.0\Test Api JWT.sourcelink.json
