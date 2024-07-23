@@ -19,7 +19,7 @@ namespace Test_Api_JWT.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly JWT _jwt;
 
-        public AuthService(UserManager<ApplicationUser> userManager,IOptions<JWT> jwt)
+        public AuthService(UserManager<ApplicationUser> userManager, IOptions<JWT> jwt)
         {
             _userManager = userManager;
             _jwt = jwt.Value;
@@ -27,33 +27,38 @@ namespace Test_Api_JWT.Services
 
         public async Task<AuthModel> RegisterAsync(RegisterModel model)
         {
+            if (model.Email == null || model.Username == null || model.Password == null)
+            {
+                return new AuthModel { Message = "Invalid input data!" };
+            }
+
             if(await _userManager.FindByEmailAsync(model.Email) is not null)
             {
-                return new AuthModel { Message = "Email is already registered!"};
+                return new AuthModel { Message = "Email is already registered!" };
             }
+
             if(await _userManager.FindByNameAsync(model.Username) is not null)
             {
-                return new AuthModel { Message = "Username is already registered!"};
+                return new AuthModel { Message = "Username is already registered!" };
             }
+
             var user = new ApplicationUser
             {
                 UserName = model.Username,
                 FirstName = model.FirstName,
                 LastName = model.LastName,
+                Email = model.Email
             };
-            var result = await _userManager.CreateAsync(user,model.Password);
-                
-            if(!result.Succeeded)
-            {
-                var errors = string.Empty;
 
-                foreach(var error in result.Errors)
-                {
-                    errors += $"{error.Description}, ";
-                }
-                return new AuthModel { Message = errors};
+            var result = await _userManager.CreateAsync(user, model.Password);
+
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return new AuthModel { Message = errors };
             }
-            await _userManager.AddToRoleAsync(user,"User");
+
+            await _userManager.AddToRoleAsync(user, "User");
 
             var jwtSecurityToken = await CreateJwtToken(user);
             return new AuthModel
@@ -76,17 +81,17 @@ namespace Test_Api_JWT.Services
             foreach (var role in roles)
                 roleClaims.Add(new Claim("roles", role));
 
-            var claims = new[]
+            var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Sub, user.UserName ?? throw new ArgumentNullException(nameof(user.UserName))),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim("uid", user.Id)
+                new Claim(JwtRegisteredClaimNames.Email, user.Email ?? throw new ArgumentNullException(nameof(user.Email))),
+                new Claim("uid", user.Id ?? throw new ArgumentNullException(nameof(user.Id)))
             }
             .Union(userClaims)
             .Union(roleClaims);
 
-            var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.key));
+            var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.Key));
             var signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
 
             var jwtSecurityToken = new JwtSecurityToken(
