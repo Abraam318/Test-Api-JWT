@@ -18,13 +18,28 @@ namespace Test_Api_JWT.Services
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly JWT _jwt;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public AuthService(UserManager<ApplicationUser> userManager, IOptions<JWT> jwt)
+        public AuthService(UserManager<ApplicationUser> userManager, IOptions<JWT> jwt, RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _jwt = jwt.Value;
+            _roleManager = roleManager;
         }
 
+        public async Task<string> AddRoleAsync(AddRoleModel model)
+        {
+            var user = await _userManager.FindByIdAsync(model.UserId);
+            if(user is null || !await _roleManager.RoleExistsAsync(model.Role))
+                return "Invalid User Id or Role";
+            if(await _userManager.IsInRoleAsync(user,model.Role))
+            {
+                return "User Already assigned to this role";
+            }
+            var result = await _userManager.AddToRoleAsync(user, model.Role);
+
+            return result.Succeeded? string.Empty : "Something went wrong";
+        }
         public async Task<AuthModel> GetTokenAsync(TokenRequestModel model)
         {
             var AuthModel = new AuthModel();
