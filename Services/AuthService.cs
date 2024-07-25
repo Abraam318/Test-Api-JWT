@@ -12,6 +12,7 @@ using Test_Api_JWT.Helpers;
 using Test_Api_JWT.Models;
 using Microsoft.Extensions.Logging;
 using JWTRefreshTokenInDotNet6.Models;
+using System.Security.Cryptography;
 
 namespace Test_Api_JWT.Services
 {
@@ -100,7 +101,9 @@ namespace Test_Api_JWT.Services
             await _userManager.AddToRoleAsync(user, "User");
 
             var jwtSecurityToken = await CreateJwtToken(user);
-            return new AuthModel
+
+
+            var mode = new AuthModel
             {
                 Email = user.Email,
                 //ExpiresOn = jwtSecurityToken.ValidTo,
@@ -109,6 +112,23 @@ namespace Test_Api_JWT.Services
                 Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken),
                 Username = user.UserName
             };
+
+
+            if(user.RefreshTokens.Any(t => t.IsActive))
+            {
+                var activeRefreshToken = user.RefreshTokens.FirstOrDefault(t=> t.IsActive);
+                mode.RefreshToken = activeRefreshToken.Token;
+                mode.RefreshTokenExpiration = activeRefreshToken.ExpiresOn;
+            }
+            else{
+                var RefreshToken = GenerateRefreshToken();
+                mode.RefreshToken = RefreshToken.Token;
+                mode.RefreshTokenExpiration = RefreshToken.ExpiresOn;
+                user.RefreshTokens.Add(RefreshToken);
+                await _userManager.UpdateAsync(user);
+            }
+
+            return mode;
         }
 
         private async Task<JwtSecurityToken> CreateJwtToken(ApplicationUser user)
@@ -143,6 +163,18 @@ namespace Test_Api_JWT.Services
             _logger.LogInformation($"Token created for user {user.UserName} with expiration {jwtSecurityToken.ValidTo}");
 
             return jwtSecurityToken;
+        }
+
+        private RefreshToken GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using var generator = new RNGCryptoServiceProvider();
+            generator.GetBytes(randomNumber);
+            return new RefreshToken {
+                Token = Convert.ToBase64String(randomNumber),
+                ExpiresOn = DateTime.Now.AddSeconds(30),
+                CreatedOn = DateTime.UtcNow
+            };
         }
     }
 }
