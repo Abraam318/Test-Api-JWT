@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using JWTRefreshTokenInDotNet6.Models;
 using Test_Api_JWT.Models;
 
 namespace Test_Api_JWT.Services

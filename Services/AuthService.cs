@@ -6,11 +6,12 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Test_Api_JWT.Helpers;
 using Test_Api_JWT.Models;
+using Microsoft.Extensions.Logging;
+using JWTRefreshTokenInDotNet6.Models;
 
 namespace Test_Api_JWT.Services
 {
@@ -19,12 +20,14 @@ namespace Test_Api_JWT.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly JWT _jwt;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly ILogger<AuthService> _logger;
 
-        public AuthService(UserManager<ApplicationUser> userManager, IOptions<JWT> jwt, RoleManager<IdentityRole> roleManager)
+        public AuthService(UserManager<ApplicationUser> userManager, IOptions<JWT> jwt, RoleManager<IdentityRole> roleManager, ILogger<AuthService> logger)
         {
             _userManager = userManager;
             _jwt = jwt.Value;
             _roleManager = roleManager;
+            _logger = logger;
         }
 
         public async Task<string> AddRoleAsync(AddRoleModel model)
@@ -53,7 +56,7 @@ namespace Test_Api_JWT.Services
 
             AuthModel.IsAuthenticated = true;
             AuthModel.Email = user.Email;
-            AuthModel.ExpiresOn = jwtSecurityToken.ValidTo;
+            //AuthModel.ExpiresOn = jwtSecurityToken.ValidTo;
             AuthModel.Roles = roleList.ToList();
             AuthModel.Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken);
             AuthModel.Username = user.UserName;
@@ -100,7 +103,7 @@ namespace Test_Api_JWT.Services
             return new AuthModel
             {
                 Email = user.Email,
-                ExpiresOn = jwtSecurityToken.ValidTo,
+                //ExpiresOn = jwtSecurityToken.ValidTo,
                 IsAuthenticated = true,
                 Roles = new List<string> { "User" },
                 Token = new JwtSecurityTokenHandler().WriteToken(jwtSecurityToken),
@@ -134,8 +137,10 @@ namespace Test_Api_JWT.Services
                 issuer: _jwt.Issuer,
                 audience: _jwt.Audience,
                 claims: claims,
-                expires: DateTime.Now.AddHours(_jwt.Duration),
+                expires: DateTime.Now.AddSeconds(30), // Use DurationInMinutes for better readability
                 signingCredentials: signingCredentials);
+
+            _logger.LogInformation($"Token created for user {user.UserName} with expiration {jwtSecurityToken.ValidTo}");
 
             return jwtSecurityToken;
         }
